@@ -24,6 +24,3 @@ hs_err_pid*
 /.metadata/
 
 .DS_Store
-/taco-cloud/
-.DS_Store
-/.gitignore
