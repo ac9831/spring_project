@@ -1,14 +1,20 @@
 package tacos.restapi;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.EntityLinks;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +28,7 @@ import tacos.Order;
 import tacos.Taco;
 import tacos.data.OrderRepository;
 import tacos.data.TacoRepository;
+
 
 @RestController
 @RequestMapping(path="/rest/design",
@@ -40,9 +47,15 @@ public class DesignTacoRestController {
 	}
 	
 	@GetMapping("/recent")
-	public Iterable<Taco> recentTacos() {
+	public CollectionModel<EntityModel<Taco>> recentTacos() {
 		PageRequest page = PageRequest.of(0,  12, Sort.by("createdAt").descending());
-		return tacoRepo.findAll(page).getContent();
+		
+		List<Taco> tacos = tacoRepo.findAll(page).getContent();
+		CollectionModel<EntityModel<Taco>> recentResources = CollectionModel.wrap(tacos);
+		
+		recentResources.add(new Link("http://localhost:8080/design/recent", "recents"));
+		
+		return recentResources;
 	}
 	
 	@GetMapping("/{id}")
@@ -97,5 +110,13 @@ public class DesignTacoRestController {
 		}
 		
 		return orderRepo.save(order);
+	}
+	
+	@DeleteMapping("/{orderId}")
+	@ResponseStatus(code=HttpStatus.NO_CONTENT)
+	public void deleteOrder(@PathVariable("orderId") Long orderId) {
+		try {
+			orderRepo.deleteById(orderId);
+		} catch (EmptyResultDataAccessException e) {}
 	}
 }
